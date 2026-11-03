@@ -2,6 +2,8 @@ local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 
 local WEBHOOK_URL = "COLE_SEU_WEBHOOK_AQUI" -- ⚠️ COLOQUE SEU LINK AQUI
 
@@ -9,6 +11,7 @@ local player = Players.LocalPlayer
 repeat task.wait() until game:IsLoaded()
 
 local requestFunc = syn and syn.request or http and http.request or http_request or fluxus and fluxus.request or request
+local noclipConnection
 
 local fruitRarities = {
 	["🔴 Mítica (Mythical)"] = {"Kitsune", "Leopard", "Dragon", "Spirit", "Control", "Venom", "Shadow", "Dough", "T-Rex", "Mammoth", "Gravity"},
@@ -85,6 +88,43 @@ local function sendDiscordNotification(fruitName)
 	requestFunc({Url = WEBHOOK_URL, Method = "POST", Headers = {["Content-Type"] = "application/json"}, Body = HttpService:JSONEncode(data)})
 end
 
+local function tweenTo(targetPos)
+	local char = player.Character
+	if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+	local root = char.HumanoidRootPart
+	
+	local distance = (root.Position - targetPos).Magnitude
+	local speed = 250 -- Velocidade segura contra Anti-Cheat
+	local timeToTravel = distance / speed
+	
+	-- Anti-gravidade para o voo ser suave
+	local antiGravity = Instance.new("BodyVelocity")
+	antiGravity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+	antiGravity.Velocity = Vector3.zero
+	antiGravity.Parent = root
+	
+	local tweenInfo = TweenInfo.new(timeToTravel, Enum.EasingStyle.Linear)
+	local tween = TweenService:Create(root, tweenInfo, {CFrame = CFrame.new(targetPos)})
+	
+	if noclipConnection then noclipConnection:Disconnect() end
+	noclipConnection = RunService.Stepped:Connect(function()
+		for _, p in ipairs(char:GetDescendants()) do
+			if p:IsA("BasePart") then p.CanCollide = false end
+		end
+	end)
+	
+	tween:Play()
+	tween.Completed:Wait()
+	
+	if noclipConnection then
+		noclipConnection:Disconnect()
+		noclipConnection = nil
+	end
+	if antiGravity then
+		antiGravity:Destroy()
+	end
+end
+
 local function serverHop()
 	print("Procurando um novo servidor...")
 	if not requestFunc then return end
@@ -115,6 +155,12 @@ local function autoSniper()
 				if part then
 					criarESP(v, part)
 					sendDiscordNotification(v.Name)
+					
+					print("A voar até a fruta: " .. v.Name)
+					-- Voa até a posição da fruta, ficando ligeiramente acima para coletar com segurança
+					tweenTo(part.Position + Vector3.new(0, 2, 0))
+					task.wait(2) -- Aguarda para confirmar a coleta
+					
 					encontrouFruta = true
 				end
 			end
@@ -122,7 +168,9 @@ local function autoSniper()
 	end
 	
 	if encontrouFruta then
-		print("Fruta encontrada! O script parou de pular de servidor para você poder pegá-la.")
+		print("Fruta recolhida! A reiniciar varredura...")
+		task.wait(1)
+		autoSniper() -- Procura novamente para ver se há mais frutas no mesmo servidor ou muda de server
 	else
 		print("Nenhuma fruta no chão. Pulando de servidor em 3 segundos...")
 		task.wait(3)
