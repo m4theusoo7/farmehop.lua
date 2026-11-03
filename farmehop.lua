@@ -14,7 +14,7 @@ local requestFunc = syn and syn.request or http and http.request or http_request
 local noclipConnection
 
 local fruitRarities = {
-	["🔴 Mítica (Mythical)"] = {"Kitsune", "Leopard", "Dragon", "Spirit", "Control", "Venom", "Shadow", "Dough", "T-Rex", "Mammoth", "Gravity"},
+	["🔴 Mítica (Mythical)"] = {"Kitsune", "Leopard", "Dragon", "Spirit", "Control", "Venom", "Shadow", "Dough", "T-Rex", "Mammoth", "Gravity", "Gas", "Yeti", "Magnet"},
 	["🟣 Lendária (Legendary)"] = {"Blizzard", "Pain", "Rumble", "Portal", "Phoenix", "Sound", "Spider", "Love", "Buddha", "Quake"},
 	["🔵 Rara (Rare)"] = {"Magma", "Ghost", "Barrier", "Rubber", "Light"},
 	["🟢 Incomum (Uncommon)"] = {"Diamond", "Dark", "Sand", "Ice", "Falcon", "Flame"},
